@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comandas</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--tx:#222;--mu:#777;--ac:#8b1e2d;--ok:#2e7d4f;--bd:#e3dcd0;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1716;--card:#262221;--tx:#f1ece6;--mu:#a59d94;--ac:#d4566a;--ok:#5fbf86;--bd:#3a3533}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:16px system-ui,-apple-system,sans-serif}
+body{background:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd);z-index:5}
+header h1{font-size:18px;margin:0;flex:1}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:10px 14px}
+button.p{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.tabs{display:flex;gap:8px;padding:12px}.tabs button{flex:1;font-weight:600}.tabs .on{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 12px 20px}
+.t{height:78px;font-size:22px;font-weight:700;position:relative;padding:4px}
+.t small{display:block;font-size:12px;font-weight:400;color:var(--mu)}
+.t.busy{background:var(--ac);color:var(--on);border-color:var(--ac)}.t.busy small{color:var(--on)}
+.bar{padding:8px 12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 57px);background:var(--bg);z-index:4}
+input[type=search],input[type=text]{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}.chips button{white-space:nowrap;padding:7px 12px;border-radius:20px;font-size:14px}.chips .on{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.list{padding:4px 12px 12px}
+.it{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;margin-bottom:6px;align-items:center}
+.it b{white-space:nowrap}
+.sum{margin:8px 12px 30px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px}
+.ln{padding:8px 0;border-bottom:1px solid var(--bd)}.ln:last-child{border:0}
+.row{display:flex;align-items:center;gap:8px}.row span{flex:1}
+.q{width:38px;height:38px;padding:0;font-size:20px}
+.ln input{margin-top:6px;padding:7px 10px;font-size:14px}
+.tot{font-size:20px;font-weight:700;display:flex;justify-content:space-between;padding-top:10px}
+.mu{color:var(--mu)}.acts{display:flex;gap:8px;margin-top:10px}.acts button{flex:1}
+.hid{display:none}
+</style></head><body>
+<header><button id="back" class="hid">←</button><h1 id="ttl">Mesas</h1><button id="cp" class="hid">Copiar</button></header>
+
+<div id="home">
+<div class="tabs"><button id="zD" class="on">Dentro</button><button id="zT">Terraza</button></div>
+<div style="padding:0 12px 10px"><button id="rs" class="p" style="width:100%">Resumen de todas las mesas</button><button id="hs" style="width:100%;margin-top:8px">Historial por días</button></div><div class="grid" id="grid"></div>
+<div class="grid"><button id="more" style="grid-column:1/-1" class="hid">+ Añadir mesa de terraza</button></div>
+</div>
+
+<div id="res" class="hid"><div class="sum"><div id="hl"></div><div id="rt" style="white-space:pre-wrap"></div><div class="acts"><button id="cpa" class="p">Copiar todo</button></div></div></div>
+<div id="tbl" class="hid">
+<div class="bar"><input type="search" id="q" placeholder="Buscar plato o vino…"><div class="chips" id="chips"></div><button id="cuo" style="width:100%">+ Añadir algo que no esté en la carta</button><div id="cu" class="hid" style="margin-top:8px"><input type="text" id="cun" placeholder="Qué han pedido (como lo entiendas)"><div class="acts"><input type="text" id="cup" inputmode="decimal" placeholder="Precio (opcional)"><button class="p" id="cuad">Añadir</button></div></div></div>
+<div class="list" id="menu"></div>
+<div class="sum" id="sum"></div>
+</div>
+
+<script>
+// Carta: [categoría, nombre, precio]
+var M=[];
+function A(c,s){s.split("\n").forEach(function(l){l=l.trim();if(!l)return;var p=l.split("|");M.push([c,p[0],parseFloat(p[1])])})}
+A("Entrantes",`Papas arrugas con mojo de almendras|11.5
+Ensaladilla rusa casera (top ventas)|14.5
+Morcilla de León|14.5
+Croquetas jamón ibérico|14.5
+Croquetas carabineros|17.5
+Alitas deshuesadas vietnamita|16.5
+Torrezno de Soria|17
+Pimientos piquillo asados|14.5
+Ensalada burrata y pesto pistacho|17
+Pisto, huevos fritos y puntillas|18.5
+Oreja guisada con tomate|16.5
+Sartén huevos y crema de boletus|18.5
+Verduras salteadas, feta y gambas|18.5
+Matrimonios Santoña (4 uds)|17
+Cecina de vaca Bierzo 120g|17`);
+A("Kalderos",`Albóndigas vaca vieja (top ventas)|21.5
+Bacalao a la riojana|25.5
+Callos guisados|19.5
+Canelones de pollo y pisto|19.5
+Arroz meloso rabo de toro (mín. 2)|24`);
+A("Carnes",`Entrecot vaca vieja 300g|26.5
+Steak tartar|23.5
+Hamburguesa La Finca (top ventas)|18.5
+Solomillo vaca vieja 220g|29.5
+Mollejas de ternera al oloroso|21.5
+Txuletón importación 500g|39.9
+Txuletón vaca vieja 1kg|63.5`);
+A("Postres",`Coulant chocolate (sin gluten)|8
+Leche frita|8
+Tiramisú|8
+Tarta de queso|8
+Torrija XXL|8`);
+A("Extras",`Pan y servicio (por persona)|2.2
+Menú degustación Tierra (por persona)|50`);
+A("Copas",`Copa Mesta Tinto (Uclés)|3
+Copa Peique Mencía (Bierzo)|3.9
+Copa Viuda Negra Crianza (Rioja)|3.7
+Copa Finca Resalso (Ribera)|3.9
+Copa Gotas de Habla (Extremadura)|3.9
+Copa Hijo del Ebanista (tinto)|3.9
+Copa Flor del Ebanista (blanco)|3.5
+Copa Anahí Semidulce|3.6
+Copa Mesta Verdejo|3
+Copa Mesta Rosado|3`);
+A("Tintos",`Mesta Tinto – Uclés|20
+Peique Mencía – Bierzo|24
+Prados Fusión – Campo de Borja|25
+Syrah de Prados – Campo de Borja|30
+Santa Rosa – Alicante|45
+Lunático Monastrell – Jumilla|26
+Abadal Cinc Merlot – Pla de Bages|34
+Malpaso – Méntrida|29
+Bellmunt – Priorato|35
+Castro Candaz – Ribeira Sacra|28
+La Miranda Secastilla – Somontano|29
+Vetus – Toro|32
+Quinta de Quercus – Uclés|29
+Gotas de Habla – Extremadura|24
+Habla del Silencio – Extremadura|27
+G2 Garnacha Centenaria – Madrid|32
+Carpetano – Madrid|31
+Sincronia Negre – Mallorca|28
+Viuda Negra Crianza – Rioja|23
+Izadi Crianza – Rioja|26
+XR Marqués de Riscal – Rioja|45
+Finca Resalso – Ribera|25
+Carmelo Rodero 9 meses – Ribera|29
+Pruno – Ribera|27
+Proventus Tr3mano – Ribera|35
+Cepa 21 – Ribera|34
+Emilio Moro Vend. Selec. – Ribera|40
+Malleolus – Ribera|49
+TSM Carmelo Rodero – Ribera|90
+El Hijo del Ebanista (botella)|25
+El Hijo del Ebanista (magnum)|50
+El Capricho del Ebanista|29`);
+A("Blancos",`Anahí Semidulce – Rioja|22
+Mesta Verdejo|20
+Abadal Picapoll – Pla de Bages|29
+Viña Marchanudo Alto – Cádiz|25
+Polvorete Godello – Bierzo|26
+Pazo de Señorans Albariño – Rías Baixas|31
+Attis Albariño – Rías Baixas|31
+Alter Blanco – Ribeiro|25
+Las Levantadas – Rioja|25
+A2 Albillo Real – Madrid|30
+Montenovo Godello – Valdeorras|27
+La Flor del Ebanista (botella)|24`);
+A("Rosado/Espumoso",`Mesta Tempranillo Rosado|20
+Izadi Larrosa Rosé – Rioja|24
+Raventós Blanc de Blancs (espumoso)|32
+Ancestral Montonega (espumoso)|30
+Laurent Perrier Brut (champagne)|75`);
+A("Copas",`Copa Albariño (precio por confirmar)|0
+Copa Godello (precio por confirmar)|0
+Copa Capricho del Ebanista (precio por confirmar)|0`);
+A("Cervezas",`Caña Victoria (rubia)|0
+Doble Victoria (rubia)|0
+Caña Turia (tostada)|0
+Doble Turia (tostada)|0
+Clara caña (con limón)|0
+Clara doble (con limón)|0
+Botellín Victoria normal (rojo)|0
+Botellín Victoria sin (azul)|0
+Botellín Victoria sin tostada (marrón)|0
+Alhambra Verde|0
+Voll Damm|0
+Keller|0
+Cerveza sin gluten (Daura)|0`);
+A("Chupitos",`Crema|0
+Limoncello|0
+Licor de manzana (sin alcohol)|0
+De hierbas|0
+Pacharán|0
+Orujo|0`);
+A("Menús grupo",`Menú 1 todo al centro (por persona)|35.5
+Menú 2 (por persona)|44.5
+Menú 2 segundo: Entrecot 350g con patatas|0
+Menú 2 segundo: Timbal de bacalao ajoarriero|0
+Menú 3 (por persona)|51.5
+Menú 3 segundo: Txuletón 500g|0
+Menú 3 segundo: Bacalao gran tajada|0
+Bebida opción A: 2 bebidas|7
+Bebida opción B: 2 bebidas + copa|14
+Bebida opción C: barra libre comida|17
+Bebida opción D: barra libre + copa|24`);
+A("Otras bebidas",`Agua|0
+Refresco|0
+Café|0`);
+var CATS=["Todo"].concat(M.map(function(x){return x[0]}).filter(function(v,i,a){return a.indexOf(v)==i}));
+var S={D:11,T:20,o:{}},zone="D",cur=null,cat="Todo",$=function(i){return document.getElementById(i)};
+try{var s=JSON.parse(localStorage.getItem("cmd")||"null");if(s)S=s}catch(e){}S.h=S.h||{};
+function save(){try{localStorage.setItem("cmd",JSON.stringify(S))}catch(e){}}
+function eur(n){return n.toFixed(2).replace(".",",")+" €"}
+function lines(k){return S.o[k]||[]}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function home(){cur=null;$("home").classList.remove("hid");$("tbl").classList.add("hid");$("res").classList.add("hid");$("back").classList.add("hid");$("cp").classList.add("hid");$("ttl").textContent="Mesas";
+$("zD").classList.toggle("on",zone=="D");$("zT").classList.toggle("on",zone=="T");$("more").classList.toggle("hid",zone!="T");
+var n=S[zone],h="";for(var i=1;i<=n;i++){var k=zone+i,L=lines(k),c=L.reduce(function(a,l){return a+l.q},0),t=L.reduce(function(a,l){return a+l.q*l.p},0);
+h+='<button class="t'+(c?' busy':'')+'" data-k="'+k+'">'+i+'<small>'+(c?c+' · '+eur(t):'libre')+'</small></button>'}
+$("grid").innerHTML=h}
+function open(k){cur=k;$("home").classList.add("hid");$("tbl").classList.remove("hid");$("back").classList.remove("hid");$("cp").classList.remove("hid");
+$("ttl").textContent=(k[0]=="D"?"Dentro":"Terraza")+" · Mesa "+k.slice(1);$("q").value="";cat="";$("cu").classList.add("hid");chips();menu();sum();window.scrollTo(0,0)}
+function chips(){$("chips").innerHTML=CATS.map(function(c){return '<button data-c="'+c+'"'+(c==cat?' class="on"':'')+'>'+c+'</button>'}).join("")}
+function menu(){var q=$("q").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""),h="";
+if(!cat&&!q){$("menu").innerHTML='<p class="mu">Elige una categoría o busca para añadir platos.</p>';return}
+M.forEach(function(x,i){var nm=x[1].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+if((!cat||cat=="Todo"||x[0]==cat)&&(!q||nm.indexOf(q)>-1||x[0].toLowerCase().indexOf(q)>-1))h+='<button class="it" data-i="'+i+'"><span>'+esc(x[1])+'</span><b>'+(x[2]?eur(x[2]):"")+'</b></button>'});
+$("menu").innerHTML=h||'<p class="mu">Nada encontrado. Prueba otra palabra.</p>'}
+function add(i){var L=S.o[cur]=lines(cur),x=M[i],f=L.filter(function(l){return l.n==x[1]&&!l.t})[0];
+if(f)f.q++;else L.push({n:x[1],p:x[2],q:1,t:""});save();sum()}
+function sum(){var L=lines(cur),h="",t=0;
+if(!L.length)h='<p class="mu" style="margin:6px 0">Mesa vacía. Toca un plato de arriba para apuntarlo.</p>';
+L.forEach(function(l,i){t+=l.q*l.p;h+='<div class="ln"><div class="row"><span><b>'+l.q+'×</b> '+esc(l.n)+'</span><button class="q" data-m="'+i+'">−</button><button class="q" data-a="'+i+'">+</button></div><input type="text" data-t="'+i+'" placeholder="Nota (sin cebolla, alergia…)" value="'+esc(l.t)+'"></div>'});
+if(L.length)h+='<div class="tot"><span>Total</span><span>'+eur(t)+'</span></div><div class="acts"><button id="clr">Vaciar mesa</button><button class="p" id="done">Mesa cobrada</button></div>';
+$("sum").innerHTML=h}
+function txt(){var L=lines(cur);return $("ttl").textContent+"\n"+L.map(function(l){return l.q+"x "+l.n+(l.t?" ("+l.t+")":"")}).join("\n")}
+function allTxt(){var out=[],g=0;[["D","DENTRO"],["T","TERRAZA"]].forEach(function(z){for(var i=1;i<=S[z[0]];i++){var L=lines(z[0]+i);if(!L.length)continue;var t=L.reduce(function(a,l){return a+l.q*l.p},0);g+=t;out.push(z[1]+" - Mesa "+i+"\n"+L.map(function(l){return l.q+"x "+l.n+(l.t?" ("+l.t+")":"")+" - "+eur(l.q*l.p)}).join("\n")+"\nTotal mesa: "+eur(t))}});
+return out.length?out.join("\n\n")+"\n\nTOTAL GENERAL: "+eur(g):"No hay ninguna mesa con pedido."}
+var shown="";
+function resumen(){$("home").classList.add("hid");$("res").classList.remove("hid");$("back").classList.remove("hid");$("ttl").textContent="Resumen";$("hl").innerHTML="";shown=allTxt();$("rt").textContent=shown;window.scrollTo(0,0)}
+function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function archive(){var L=lines(cur);if(!L.length)return;var n=new Date(),d=today(),tot=L.reduce(function(a,l){return a+l.q*l.p},0);(S.h[d]=S.h[d]||[]).push({z:cur[0]=="D"?"Dentro":"Terraza",m:cur.slice(1),hora:("0"+n.getHours()).slice(-2)+":"+("0"+n.getMinutes()).slice(-2),L:JSON.parse(JSON.stringify(L)),tot:tot})}
+function dayTxt(d){var A=S.h[d]||[],g=0;return d+"\n\n"+A.map(function(x){g+=x.tot;return x.hora+" - "+x.z+" - Mesa "+x.m+"\n"+x.L.map(function(l){return l.q+"x "+l.n+(l.t?" ("+l.t+")":"")+" - "+eur(l.q*l.p)}).join("\n")+"\nTotal mesa: "+eur(x.tot)}).join("\n\n")+"\n\nTOTAL DEL DÍA: "+eur(g)}
+function historial(){$("home").classList.add("hid");$("res").classList.remove("hid");$("back").classList.remove("hid");$("ttl").textContent="Historial";var D=Object.keys(S.h).sort().reverse();shown="";$("hl").innerHTML=D.map(function(d){return '<button data-d="'+d+'" style="margin:0 6px 8px 0">'+d+' ('+S.h[d].length+')</button>'}).join("");$("rt").textContent=D.length?"Toca un día para ver lo que se cobró.":"Todavía no hay nada guardado. Se guarda al pulsar Mesa cobrada.";window.scrollTo(0,0)}
+document.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+if(b.dataset.d){shown=dayTxt(b.dataset.d);$("rt").textContent=shown}else if(b.id=="hs"){historial()}else if(b.id=="cuo"){$("cu").classList.toggle("hid");$("cun").value=$("q").value;$("cun").focus()}else if(b.id=="cuad"){var nm=$("cun").value.trim();if(nm){var pr=parseFloat($("cup").value.replace(",","."))||0,LL=S.o[cur]=lines(cur);LL.push({n:nm+" (añadido a mano)",p:pr,q:1,t:""});save();$("cun").value="";$("cup").value="";$("cu").classList.add("hid");sum()}}else if(b.id=="rs"){resumen()}else if(b.id=="cpa"){var ta=shown;try{navigator.clipboard.writeText(ta);b.textContent="¡Copiado!"}catch(x){b.textContent="No se pudo"}setTimeout(function(){b.textContent="Copiar todo"},1500)}else if(b.id=="zD"){zone="D";home()}else if(b.id=="zT"){zone="T";home()}
+else if(b.id=="more"){S.T++;save();home()}
+else if(b.id=="back"){home()}
+else if(b.dataset.k){open(b.dataset.k)}
+else if(b.dataset.c){cat=cat==b.dataset.c?"":b.dataset.c;chips();menu()}
+else if(b.dataset.i){add(+b.dataset.i)}
+else if(b.dataset.a!==undefined){lines(cur)[+b.dataset.a].q++;save();sum()}
+else if(b.dataset.m!==undefined){var L=lines(cur),i=+b.dataset.m;if(--L[i].q<1)L.splice(i,1);save();sum()}
+else if(b.id=="clr"||b.id=="done"){if(b.dataset.s){if(b.id=="done")archive();S.o[cur]=[];save();home()}else{b.dataset.s=1;b.textContent="¿Seguro? Toca otra vez"}}
+else if(b.id=="cp"){var t=txt();try{navigator.clipboard.writeText(t);b.textContent="¡Copiado!"}catch(x){b.textContent="No se pudo"}setTimeout(function(){b.textContent="Copiar"},1500)}});
+document.addEventListener("input",function(e){if(e.target.id=="q")menu();else if(e.target.dataset.t!==undefined){lines(cur)[+e.target.dataset.t].t=e.target.value;save()}});
+home();
+</script></body></html>
